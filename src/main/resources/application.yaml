@@ -21,6 +21,12 @@ spring:
                 - Path=/api/bookings/**,/api/users/*/bookings
               filters:
                 - StripPrefix=1
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - StripPrefix=1
             - id: payment-service
               uri: ${PAYMENT_SERVICE_URL:http://localhost:8082}
               predicates:
@@ -43,6 +49,8 @@ management:
 services:
   booking:
     base-url: ${BOOKING_SERVICE_URL:http://localhost:8081}
+  user:
+    base-url: ${USER_SERVICE_URL:http://localhost:8090}
   payment:
     base-url: ${PAYMENT_SERVICE_URL:http://localhost:8082}
   ticketing:

@@ -19,16 +19,19 @@ public class DemoController {
     private final String bookingServiceUrl;
     private final String paymentServiceUrl;
     private final String ticketingServiceUrl;
+    private final String userServiceUrl;
 
     public DemoController(
             WebClient.Builder webClientBuilder,
             @Value("${services.booking.base-url}") String bookingServiceUrl,
             @Value("${services.payment.base-url}") String paymentServiceUrl,
-            @Value("${services.ticketing.base-url}") String ticketingServiceUrl) {
+            @Value("${services.ticketing.base-url}") String ticketingServiceUrl,
+            @Value("${services.user.base-url}") String userServiceUrl) {
         this.webClient = webClientBuilder.build();
         this.bookingServiceUrl = bookingServiceUrl;
         this.paymentServiceUrl = paymentServiceUrl;
         this.ticketingServiceUrl = ticketingServiceUrl;
+        this.userServiceUrl = userServiceUrl;
     }
 
     @GetMapping
@@ -36,14 +39,16 @@ public class DemoController {
         Mono<String> booking = health(bookingServiceUrl);
         Mono<String> payment = health(paymentServiceUrl);
         Mono<String> ticketing = health(ticketingServiceUrl);
+        Mono<String> user = health(userServiceUrl);
 
-        return Mono.zip(booking, payment, ticketing)
+        return Mono.zip(booking, payment, ticketing, user)
                 .map(tuple -> Map.of(
                         "message", "API call success",
                         "gateway", "UP",
                         "bookingService", tuple.getT1(),
                         "paymentService", tuple.getT2(),
                         "ticketingService", tuple.getT3(),
+                        "userService", tuple.getT4(),
                         "timestamp", LocalDateTime.now().toString()));
     }
 
@@ -79,6 +84,15 @@ public class DemoController {
                 .map(status -> Map.of(
                         "message", "Ticketing service API call success",
                         "ticketingService", status,
+                        "timestamp", LocalDateTime.now().toString()));
+    }
+
+    @GetMapping("/user")
+    public Mono<Map<String, Object>> user() {
+        return health(userServiceUrl)
+                .map(status -> Map.of(
+                        "message", "User service API call success",
+                        "userService", status,
                         "timestamp", LocalDateTime.now().toString()));
     }
 
