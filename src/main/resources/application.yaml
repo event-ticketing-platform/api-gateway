@@ -27,6 +27,12 @@ spring:
                 - Path=/api/payments/**
               filters:
                 - StripPrefix=1
+            - id: ticketing-service
+              uri: ${TICKETING_SERVICE_URL:http://localhost:8091}
+              predicates:
+                - Path=/api/tickets/**,/api/ticket-types/**,/api/events/*/tickettypes
+              filters:
+                - StripPrefix=1
 
 management:
   endpoints:
@@ -39,3 +45,5 @@ services:
     base-url: ${BOOKING_SERVICE_URL:http://localhost:8081}
   payment:
     base-url: ${PAYMENT_SERVICE_URL:http://localhost:8082}
+  ticketing:
+    base-url: ${TICKETING_SERVICE_URL:http://localhost:8091}

@@ -18,27 +18,32 @@ public class DemoController {
     private final WebClient webClient;
     private final String bookingServiceUrl;
     private final String paymentServiceUrl;
+    private final String ticketingServiceUrl;
 
     public DemoController(
             WebClient.Builder webClientBuilder,
             @Value("${services.booking.base-url}") String bookingServiceUrl,
-            @Value("${services.payment.base-url}") String paymentServiceUrl) {
+            @Value("${services.payment.base-url}") String paymentServiceUrl,
+            @Value("${services.ticketing.base-url}") String ticketingServiceUrl) {
         this.webClient = webClientBuilder.build();
         this.bookingServiceUrl = bookingServiceUrl;
         this.paymentServiceUrl = paymentServiceUrl;
+        this.ticketingServiceUrl = ticketingServiceUrl;
     }
 
     @GetMapping
     public Mono<Map<String, Object>> demo() {
         Mono<String> booking = health(bookingServiceUrl);
         Mono<String> payment = health(paymentServiceUrl);
+        Mono<String> ticketing = health(ticketingServiceUrl);
 
-        return Mono.zip(booking, payment)
+        return Mono.zip(booking, payment, ticketing)
                 .map(tuple -> Map.of(
                         "message", "API call success",
                         "gateway", "UP",
                         "bookingService", tuple.getT1(),
                         "paymentService", tuple.getT2(),
+                        "ticketingService", tuple.getT3(),
                         "timestamp", LocalDateTime.now().toString()));
     }
 
@@ -65,6 +70,15 @@ public class DemoController {
                 .map(status -> Map.of(
                         "message", "Payment service API call success",
                         "paymentService", status,
+                        "timestamp", LocalDateTime.now().toString()));
+    }
+
+    @GetMapping("/ticketing")
+    public Mono<Map<String, Object>> ticketing() {
+        return health(ticketingServiceUrl)
+                .map(status -> Map.of(
+                        "message", "Ticketing service API call success",
+                        "ticketingService", status,
                         "timestamp", LocalDateTime.now().toString()));
     }
 
