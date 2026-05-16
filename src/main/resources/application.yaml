@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: api-gateway
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:h2:mem:///authdb;DB_CLOSE_DELAY=-1}
+    username: ${SPRING_R2DBC_USERNAME:sa}
+    password: ${SPRING_R2DBC_PASSWORD:}
+  sql:
+    init:
+      mode: always
   cloud:
     gateway:
       server:
@@ -15,16 +22,22 @@ spring:
                 allowedMethods: "*"
                 allowedHeaders: "*"
           routes:
+            - id: booking-payment-service
+              uri: ${PAYMENT_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/bookings/*/payment
+              filters:
+                - StripPrefix=1
+            - id: booking-user-bookings
+              uri: ${BOOKING_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/users/*/bookings
+              filters:
+                - StripPrefix=1
             - id: booking-service
               uri: ${BOOKING_SERVICE_URL:http://localhost:8081}
               predicates:
-                - Path=/api/bookings/**,/api/users/*/bookings
-              filters:
-                - StripPrefix=1
-            - id: user-service
-              uri: ${USER_SERVICE_URL:http://localhost:8090}
-              predicates:
-                - Path=/api/users/**
+                - Path=/api/bookings/**
               filters:
                 - StripPrefix=1
             - id: payment-service
@@ -33,10 +46,58 @@ spring:
                 - Path=/api/payments/**
               filters:
                 - StripPrefix=1
-            - id: ticketing-service
-              uri: ${TICKETING_SERVICE_URL:http://localhost:8091}
+            - id: booking-catalog-service
+              uri: ${BOOKING_SERVICE_URL:http://localhost:8081}
               predicates:
-                - Path=/api/tickets/**,/api/ticket-types/**,/api/events/*/tickettypes
+                - Path=/api/catalog/**
+              filters:
+                - StripPrefix=2
+            - id: ticketing-event-ticket-types
+              uri: ${TICKETING_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
+              predicates:
+                - Path=/api/events/*/tickettypes,/api/events/*/ticket-types
+              filters:
+                - StripPrefix=1
+            - id: checkin-event-routes
+              uri: ${CHECKIN_SERVICE_URL:http://localhost:8087}
+              predicates:
+                - Path=/api/events/*/checkins,/api/events/*/attendance
+              filters:
+                - StripPrefix=1
+            - id: event-service
+              uri: ${EVENT_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
+              predicates:
+                - Path=/api/events/**
+              filters:
+                - StripPrefix=1
+            - id: ticketing-service
+              uri: ${TICKETING_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
+              predicates:
+                - Path=/api/ticket-types/**,/api/tickets/**
+              filters:
+                - StripPrefix=1
+            - id: venue-service
+              uri: ${VENUE_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/venues/**
+              filters:
+                - StripPrefix=1
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - StripPrefix=1
+            - id: checkin-service
+              uri: ${CHECKIN_SERVICE_URL:http://localhost:8087}
+              predicates:
+                - Path=/api/checkins/**
+              filters:
+                - StripPrefix=1
+            - id: reporting-service
+              uri: ${REPORTING_SERVICE_URL:http://localhost:8089}
+              predicates:
+                - Path=/api/reports/**
               filters:
                 - StripPrefix=1
 
@@ -49,9 +110,29 @@ management:
 services:
   booking:
     base-url: ${BOOKING_SERVICE_URL:http://localhost:8081}
-  user:
-    base-url: ${USER_SERVICE_URL:http://localhost:8090}
   payment:
     base-url: ${PAYMENT_SERVICE_URL:http://localhost:8082}
+  event:
+    base-url: ${EVENT_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
+  venue:
+    base-url: ${VENUE_SERVICE_URL:http://localhost:8084}
+  user:
+    base-url: ${USER_SERVICE_URL:http://localhost:8090}
   ticketing:
-    base-url: ${TICKETING_SERVICE_URL:http://localhost:8091}
+    base-url: ${TICKETING_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
+  checkin:
+    base-url: ${CHECKIN_SERVICE_URL:http://localhost:8087}
+  reporting:
+    base-url: ${REPORTING_SERVICE_URL:http://localhost:8089}
+
+security:
+  jwt:
+    issuer: ${JWT_ISSUER:event-ticketing-gateway}
+    secret: ${JWT_SECRET:event-ticketing-development-secret-32}
+    ttl-minutes: ${JWT_TTL_MINUTES:120}
+  auth:
+    bootstrap-admin:
+      enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:true}
+      username: ${AUTH_BOOTSTRAP_ADMIN_USERNAME:admin}
+      email: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:admin@event-ticketing.local}
+      password: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:admin123}

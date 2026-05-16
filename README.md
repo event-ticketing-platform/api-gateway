@@ -1,71 +1,70 @@
 # API Gateway
 
-The API Gateway is the single entry point for the frontend.
-
-Instead of the Vue app calling every microservice directly, it calls the gateway. The gateway then routes requests to Booking Service or Payment Service.
+Common entry point for the frontend and all Assignment 3 services.
 
 ## What It Does
 
-- Routes booking API calls to Booking Service.
-- Routes payment API calls to Payment Service.
-- Provides simple demo health endpoints for the frontend buttons.
-- Handles CORS for local frontend development.
+- Provides fallback local auth for development.
+- Routes primary login and registration to User Service.
+- Accepts gateway-issued JWTs and User Service JWTs.
+- Routes service APIs under `/api/**`.
 
-## Main Routes
+## Routes
 
-| Frontend/Gateway Path | Goes To |
+| Gateway path | Target |
 | --- | --- |
-| `/api/bookings/**` | Booking Service `/bookings/**` |
-| `/api/users/*/bookings` | Booking Service `/users/*/bookings` |
-| `/api/payments/**` | Payment Service `/payments/**` |
-| `/api/demo/gateway` | Gateway health/demo response |
-| `/api/demo/booking` | Booking Service health check |
-| `/api/demo/payment` | Payment Service health check |
-| `/api/demo/booking-payment` | Booking Service creates a booking and calls Payment Service |
+| `/api/auth/register` | Gateway auth |
+| `/api/auth/login` | Gateway auth |
+| `/api/auth/me` | Gateway auth |
+| `/api/bookings/**` | Booking |
+| `/api/users/*/bookings` | Booking |
+| `/api/payments/**` | Payment |
+| `/api/bookings/{id}/payment` | Payment |
+| `/api/events/*/tickettypes` | Ticketing, or Booking in standalone mode |
+| `/api/events/*/ticket-types` | Ticketing, or Booking in standalone mode |
+| `/api/events/**` | Event |
+| `/api/ticket-types/**` | Ticketing, or Booking in standalone mode |
+| `/api/tickets/**` | Ticketing |
+| `/api/venues/**` | Venue |
+| `/api/users/**` | User |
+| `/api/checkins/**` | Check-in |
+| `/api/events/{id}/checkins` | Check-in |
+| `/api/events/{id}/attendance` | Check-in |
+| `/api/reports/**` | Reporting |
 
-## Run With The Full System
+The base Compose file points Event and User routes to the teammate images. Ticketing still falls back to Booking until that service is available.
 
-From the infra folder:
+## Run
 
 ```bash
 cd ../infra
 docker compose up --build
 ```
 
-The gateway runs on:
+Gateway URL:
 
 ```text
-http://localhost:8080
-```
-
-## Run Locally
-
-This service does not have its own Maven wrapper. Use the wrapper from another Spring service:
-
-```bash
-../booking-service/mvnw spring-boot:run
-```
-
-## Demo Checks
-
-```bash
-curl http://localhost:8080/api/demo/gateway
-curl http://localhost:8080/api/demo/booking
-curl http://localhost:8080/api/demo/payment
-curl http://localhost:8080/api/demo/booking-payment
+http://localhost:18080
 ```
 
 ## Important Environment Variables
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `SERVER_PORT` | `8080` | Gateway port |
-| `BOOKING_SERVICE_URL` | `http://localhost:8081` | Booking Service URL |
-| `PAYMENT_SERVICE_URL` | `http://localhost:8082` | Payment Service URL |
-| `CORS_ALLOWED_ORIGINS` | local frontend URLs | Frontend origins allowed by CORS |
+| Variable | Meaning |
+| --- | --- |
+| `SPRING_R2DBC_URL` | Auth database connection |
+| `JWT_ISSUER` | JWT issuer shared by all services |
+| `JWT_SECRET` | HMAC JWT secret shared by all services |
+| `BOOKING_SERVICE_URL` | Booking service URL |
+| `PAYMENT_SERVICE_URL` | Payment service URL |
+| `EVENT_SERVICE_URL` | Event service URL |
+| `VENUE_SERVICE_URL` | Venue service URL |
+| `USER_SERVICE_URL` | User service URL |
+| `TICKETING_SERVICE_URL` | Ticketing service URL |
+| `CHECKIN_SERVICE_URL` | Check-in service URL |
+| `REPORTING_SERVICE_URL` | Reporting service URL |
 
-## Tests / Build Check
+## Tests
 
 ```bash
-../booking-service/mvnw test
+../booking-service/mvnw -f pom.xml test
 ```
