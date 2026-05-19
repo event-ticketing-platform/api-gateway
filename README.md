@@ -11,6 +11,8 @@ Common entry point for the frontend and all Assignment 3 services.
 
 ## Routes
 
+The gateway supports both the frontend `/api/...` routes and plain service-style routes such as `/events`, `/venues`, `/users`, `/tickets`, `/api/checkin/...`, and `/api/analytics/...`.
+
 | Gateway path | Target |
 | --- | --- |
 | `/api/auth/register` | Gateway auth |
@@ -20,10 +22,10 @@ Common entry point for the frontend and all Assignment 3 services.
 | `/api/users/*/bookings` | Booking |
 | `/api/payments/**` | Payment |
 | `/api/bookings/{id}/payment` | Payment |
-| `/api/events/*/tickettypes` | Ticketing, or Booking in standalone mode |
-| `/api/events/*/ticket-types` | Ticketing, or Booking in standalone mode |
+| `/api/events/*/tickettypes` | Ticketing through Event ID bridge |
+| `/api/events/*/ticket-types` | Ticketing through Event ID bridge |
 | `/api/events/**` | Event |
-| `/api/ticket-types/**` | Ticketing, or Booking in standalone mode |
+| `/api/ticket-types/**` | Ticketing |
 | `/api/tickets/**` | Ticketing |
 | `/api/venues/**` | Venue |
 | `/api/users/**` | User |
@@ -32,7 +34,7 @@ Common entry point for the frontend and all Assignment 3 services.
 | `/api/events/{id}/attendance` | Check-in |
 | `/api/reports/**` | Reporting |
 
-The base Compose file points Event and User routes to the teammate images. Ticketing still falls back to Booking until that service is available.
+The full team Compose file points Event, Venue, User, Ticketing, Check-in, and Reporting routes to the teammate images. Numeric event ticket-type routes are bridged by the gateway because the current Event image uses numeric event IDs while the Ticketing image uses UUID event IDs. The bridge maps Event Service id `1` to Ticketing event id `00000000-0000-0000-0000-000000000001` and exposes an internal `/ticketing-event-adapter/events/{uuid}` endpoint so Ticketing can validate published Event Service events.
 
 ## Run
 
@@ -44,7 +46,7 @@ docker compose up --build
 Gateway URL:
 
 ```text
-http://localhost:18080
+http://localhost:8080
 ```
 
 ## Important Environment Variables

@@ -59,11 +59,43 @@ public class SecurityConfig {
                                 "/api/payments/stripe/webhook",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**")
+                                "/v3/api-docs/**",
+                                "/ticketing-event-adapter/**")
                         .permitAll()
-                        .pathMatchers(HttpMethod.GET, "/api/events/**", "/api/ticket-types/**", "/api/catalog/**").permitAll()
+                        .pathMatchers(HttpMethod.GET,
+                                "/api/events",
+                                "/api/events/*",
+                                "/api/events/*/tickettypes",
+                                "/api/events/*/ticket-types",
+                                "/api/ticket-types/**",
+                                "/api/catalog/**")
+                        .permitAll()
+                        .pathMatchers("/api/checkin/**", "/api/checkins/**").hasRole("ADMIN")
+                        .pathMatchers("/api/reports/**", "/api/analytics/**").hasRole("ADMIN")
+                        .pathMatchers("/api/events/*/checkins", "/api/events/*/attendance").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PATCH, "/api/users/*/role").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.POST,
+                                "/api/events/**",
+                                "/api/venues/**",
+                                "/api/ticket-types/**")
+                        .hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PUT,
+                                "/api/events/**",
+                                "/api/venues/**")
+                        .hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PATCH,
+                                "/api/events/**",
+                                "/api/venues/**",
+                                "/api/ticket-types/**")
+                        .hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.DELETE,
+                                "/api/events/**",
+                                "/api/venues/**",
+                                "/api/reports/**",
+                                "/api/analytics/**")
+                        .hasRole("ADMIN")
                         .pathMatchers("/api/**").authenticated()
-                        .anyExchange().permitAll())
+                        .anyExchange().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                         jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();

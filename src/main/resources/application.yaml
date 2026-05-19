@@ -52,18 +52,12 @@ spring:
                 - Path=/api/catalog/**
               filters:
                 - StripPrefix=2
-            - id: ticketing-event-ticket-types
-              uri: ${TICKETING_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
-              predicates:
-                - Path=/api/events/*/tickettypes,/api/events/*/ticket-types
-              filters:
-                - StripPrefix=1
             - id: checkin-event-routes
-              uri: ${CHECKIN_SERVICE_URL:http://localhost:8087}
+              uri: ${CHECKIN_SERVICE_URL:http://localhost:8086}
               predicates:
                 - Path=/api/events/*/checkins,/api/events/*/attendance
               filters:
-                - StripPrefix=1
+                - RewritePath=/api/events(?<remaining>/?.*), /api/checkin/events$\{remaining}
             - id: event-service
               uri: ${EVENT_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
               predicates:
@@ -71,9 +65,9 @@ spring:
               filters:
                 - StripPrefix=1
             - id: ticketing-service
-              uri: ${TICKETING_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
+              uri: ${TICKETING_SERVICE_URL:http://localhost:8091}
               predicates:
-                - Path=/api/ticket-types/**,/api/tickets/**
+                - Path=/api/ticket-types/**,/api/tickets,/api/tickets/**
               filters:
                 - StripPrefix=1
             - id: venue-service
@@ -89,17 +83,25 @@ spring:
               filters:
                 - StripPrefix=1
             - id: checkin-service
-              uri: ${CHECKIN_SERVICE_URL:http://localhost:8087}
+              uri: ${CHECKIN_SERVICE_URL:http://localhost:8086}
               predicates:
-                - Path=/api/checkins/**
+                - Path=/api/checkins,/api/checkins/**
               filters:
-                - StripPrefix=1
+                - RewritePath=/api/checkins(?<remaining>/?.*), /api/checkin/checkins$\{remaining}
             - id: reporting-service
-              uri: ${REPORTING_SERVICE_URL:http://localhost:8089}
+              uri: ${REPORTING_SERVICE_URL:http://localhost:8087}
               predicates:
-                - Path=/api/reports/**
+                - Path=/api/reports,/api/reports/**
               filters:
-                - StripPrefix=1
+                - RewritePath=/api/reports(?<remaining>/?.*), /api/analytics/events$\{remaining}
+            - id: reporting-direct-path
+              uri: ${REPORTING_SERVICE_URL:http://localhost:8087}
+              predicates:
+                - Path=/api/analytics/**
+            - id: checkin-direct-path
+              uri: ${CHECKIN_SERVICE_URL:http://localhost:8086}
+              predicates:
+                - Path=/api/checkin/**
 
 management:
   endpoints:
@@ -119,11 +121,11 @@ services:
   user:
     base-url: ${USER_SERVICE_URL:http://localhost:8090}
   ticketing:
-    base-url: ${TICKETING_SERVICE_URL:${BOOKING_SERVICE_URL:http://localhost:8081}}
+    base-url: ${TICKETING_SERVICE_URL:http://localhost:8091}
   checkin:
-    base-url: ${CHECKIN_SERVICE_URL:http://localhost:8087}
+    base-url: ${CHECKIN_SERVICE_URL:http://localhost:8086}
   reporting:
-    base-url: ${REPORTING_SERVICE_URL:http://localhost:8089}
+    base-url: ${REPORTING_SERVICE_URL:http://localhost:8087}
 
 security:
   jwt:
